@@ -26,7 +26,7 @@
  --------------------------------------------------------------------------
  */
 
-define ('PLUGIN_ESCALADE_VERSION', '2.7.2');
+define ('PLUGIN_ESCALADE_VERSION', '2.7.3');
 
 // Minimal GLPI version, inclusive
 define("PLUGIN_ESCALADE_MIN_GLPI", "9.5");
@@ -91,6 +91,11 @@ function plugin_init_escalade() {
                //history and climb feature
                if ($escalade_config['show_history']) {
                   $PLUGIN_HOOKS['add_javascript']['escalade'][] = 'js/escalade.js.php';
+               }
+
+               //assign group feature
+               if ($escalade_config['assign_group']) {
+                  $PLUGIN_HOOKS['add_javascript']['escalade'][] = 'js/assigngroup_ticket.js.php';
                }
 
                //clone ticket feature
