@@ -158,4 +158,33 @@ class PluginEscaladeGroup_Group extends CommonDBRelation {
 
       return $groups;
    }
+
+   function getAssignGroups($ticket_id, $removeAlreadyAssigned = true) {
+      $groups = $this->getGroups($ticket_id);
+
+      $plugin_dir = Plugin::getWebDir('escalade');
+
+      echo "<div class='escalade'>";
+
+      foreach($groups as $id => $name) {
+         echo "<div class='escalade_history'>";
+
+         //up link and image
+         echo "<a href='$plugin_dir/front/climb_group.php?tickets_id="
+            .$ticket_id."&groups_id=".$id;
+         echo "' title='".__("Assign the ticket to group", "escalade")."' class='up_a'></a>";
+
+         $group = new Group();
+
+         //group link
+         echo "&nbsp;<i class='fas fa-users'></i>&nbsp;";
+         if ($group->getFromDB($id)) {
+            echo PluginEscaladeHistory::showGroupLink($group, false);
+         }
+
+         echo "</div>";
+      }
+
+      echo "</div>";
+   }
 }
