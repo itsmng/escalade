@@ -209,3 +209,11 @@ msgstr "Don't change"
 #: js/cloneandlink_ticket.js.php:13
 msgid "Clone and link"
 msgstr "Clone and link"
+
+#: inc/group_group.class.php:175
+msgid "Assign the ticket to group"
+msgstr "Assign the ticket to group"
+
+#: inc/config.class.php:214
+msgid "Assign a group quickly"
+msgstr "Assign a group quickly"
