@@ -208,6 +208,17 @@ class PluginEscaladeConfig extends CommonDBTM {
          'rand' => $rand,
       ]);
       echo "</td>";
+
+      $rand = mt_rand();
+      echo "<td id='assign_group_td1' $style><label for='dropdown_assign_group$rand'>";
+      echo __("Assign a group quickly", "escalade");
+      echo "</label></td>";
+      echo "<td id='assign_group_td2' $style>";
+      Dropdown::showYesNo("assign_group", $this->fields["assign_group"], -1, [
+         'width' => '100%',
+         'rand' => $rand,
+      ]);
+      echo "</td>";
       echo "</tr>";
 
       $rand = mt_rand();

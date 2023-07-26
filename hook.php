@@ -81,12 +81,13 @@ function plugin_escalade_install() {
          `use_filter_assign_group`                 INT(11) NOT NULL,
          `ticket_last_status`                      INT(11) NOT NULL,
          `remove_requester`                        INT(11) NOT NULL,
+         `assign_group`                            INT(11) NOT NULL,
          PRIMARY KEY (`id`)
       ) ENGINE = InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
       $DB->query($query);
 
       $query = "INSERT INTO glpi_plugin_escalade_configs
-      VALUES (NULL, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, '".Ticket::WAITING."',0)";
+      VALUES (NULL, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, '".Ticket::WAITING."',0, 0)";
       $DB->query($query);
    }
 
@@ -305,6 +306,14 @@ function plugin_escalade_install() {
    if (!$DB->fieldExists('glpi_plugin_escalade_configs', 'remove_requester')) {
       $migration->addField('glpi_plugin_escalade_configs', 'remove_requester',
                            'integer', ['after' => 'ticket_last_status']);
+      $migration->migrationOneTable('glpi_plugin_escalade_configs');
+   }
+
+   // Update to 2.7.3
+   // add new fields
+   if (!$DB->fieldExists('glpi_plugin_escalade_configs', 'assign_group')) {
+      $migration->addField('glpi_plugin_escalade_configs', 'assign_group',
+                           'integer', ['after' => 'remove_requester']);
       $migration->migrationOneTable('glpi_plugin_escalade_configs');
    }
 
