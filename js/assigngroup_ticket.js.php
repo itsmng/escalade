@@ -30,10 +30,11 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
 
       //set active group in red
       $("table:contains('$locale_actor') td:last, .tab_actors .actor-bloc:last")
-         .find("a[href*=group]")
+         .find("i[class*=fa-users]")
          .addClass('escalade_active')
-         .last()
-         .append(
+         .next()
+         .next()
+         .after(
             $('<div></div>').load(
                plugin_url+'/ajax/group.php',
                {'tickets_id': tickets_id}
