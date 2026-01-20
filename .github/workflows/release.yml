@@ -27,12 +27,12 @@ jobs:
           cd /home/runner/work/escalade/
           cd escalade && composer install --no-dev && cd ..
           rm -r escalade/.git* escalade/composer.*
-          tar -zcvf escalade-${{ github.ref_name }}.tgz tag
+          tar -zcvf escalade-${{ github.ref_name }}.tgz escalade
 
       - name: Upload release
         uses: actions/upload-artifact@v4
         with:
-          name: ticketai-${{ github.ref_name }}.tgz
+          name: escalade-${{ github.ref_name }}.tgz
           path: /home/runner/work/escalade/escalade-${{ github.ref_name }}.tgz
       
       - name: Create release
