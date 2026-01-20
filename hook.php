@@ -309,13 +309,21 @@ function plugin_escalade_install() {
       $migration->migrationOneTable('glpi_plugin_escalade_configs');
    }
 
-   // Update to 2.7.3
-   // add new fields
-   if (!$DB->fieldExists('glpi_plugin_escalade_configs', 'assign_group')) {
-      $migration->addField('glpi_plugin_escalade_configs', 'assign_group',
-                           'integer', ['after' => 'remove_requester']);
-      $migration->migrationOneTable('glpi_plugin_escalade_configs');
-   }
+    // Update to 2.7.3
+    // add new fields
+    if (!$DB->fieldExists('glpi_plugin_escalade_configs', 'assign_group')) {
+       $migration->addField('glpi_plugin_escalade_configs', 'assign_group',
+                            'integer', ['after' => 'remove_requester']);
+       $migration->migrationOneTable('glpi_plugin_escalade_configs');
+    }
+
+    // Update to 2.8.0
+    // add new fields
+    if (!$DB->fieldExists('glpi_plugin_escalade_configs', 'bypass_categories')) {
+       $migration->addField('glpi_plugin_escalade_configs', 'bypass_categories',
+                            'text', ['after' => 'assign_group']);
+       $migration->migrationOneTable('glpi_plugin_escalade_configs');
+    }
 
    return true;
 }

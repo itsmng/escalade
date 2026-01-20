@@ -204,6 +204,13 @@ msgstr ""
 msgid "Don't change"
 msgstr ""
 
+#: inc/config.class.php:312
+msgid "Ticket categories that bypass escalation"
+msgstr ""
+
+msgid "Select categories"
+msgstr ""
+
 #: js/cloneandlink_ticket.js.php:13
 msgid "Clone and link"
 msgstr ""

@@ -286,7 +286,62 @@ class PluginEscaladeConfig extends CommonDBTM {
          'rand' => $rand,
       ]);
       echo "</td>";
-      echo "<td colspan='2'></td>";
+
+      $rand = mt_rand();
+      echo "<td><label for='dropdown_bypass_categories$rand'>";
+      echo __("Ticket categories that bypass escalation", "escalade") . "</td>";
+      echo "<td>";
+
+      $selected_categories = [];
+      if (!empty($this->fields['bypass_categories'])) {
+         $selected_categories = json_decode($this->fields['bypass_categories'], true);
+         if (!is_array($selected_categories)) {
+            $selected_categories = [];
+         }
+      }
+
+      $category = new ITILCategory();
+      $categories = $category->find([
+         'is_helpdeskvisible' => 1
+      ] + getEntitiesRestrictCriteria(ITILCategory::getTable()),
+      ['completename']);
+
+      echo "<select name='_bypass_categories[]' id='dropdown_bypass_categories$rand' multiple size='8'>";
+
+      foreach ($categories as $cat) {
+         $name = isset($cat['completename']) ? $cat['completename'] : $cat['name'];
+         $selected = in_array($cat['id'], $selected_categories) ? ' selected' : '';
+         echo "<option value='{$cat['id']}'$selected>" . htmlspecialchars($name) . "</option>";
+      }
+      echo "</select>";
+
+      echo "<input type='hidden' name='bypass_categories' id='bypass_categories_json_$rand' value='" . json_encode($selected_categories) . "'>";
+
+      echo Html::scriptBlock("
+         $(document).ready(function() {
+            var initSelect2$rand = function() {
+               $('#dropdown_bypass_categories$rand').select2({
+                  theme: 'bootstrap-5',
+                  width: '100%',
+                  closeOnSelect: false,
+                  placeholder: '" . __('Select categories', 'escalade') . "'
+               }).on('change', function() {
+                  var selected = $(this).val() || [];
+                  $('#bypass_categories_json_$rand').val(JSON.stringify(selected));
+               });
+            };
+
+            if (typeof $.fn.select2 !== 'undefined') {
+               initSelect2$rand();
+            } else {
+               $.getScript('" . $CFG_GLPI['root_doc'] . "/node_modules/select2/dist/js/select2.min.js', function() {
+                  initSelect2$rand();
+               });
+            }
+         });
+      ");
+
+      echo "</td>";
       echo "</tr>";
 
       $options['candel']       = false;
@@ -315,7 +370,22 @@ class PluginEscaladeConfig extends CommonDBTM {
 
    }
 
-   static function dropdownGenericStatus($itemtype, $name, $rand, $value = CommonITILObject::INCOMING) {
+    static function canBypassEscalation($categories_id) {
+       $config = $_SESSION['plugins']['escalade']['config'] ?? [];
+
+       if (empty($config['bypass_categories'])) {
+          return false;
+       }
+
+       $bypass_categories = json_decode($config['bypass_categories'], true);
+       if (!is_array($bypass_categories)) {
+          return false;
+       }
+
+       return in_array($categories_id, $bypass_categories);
+    }
+
+    static function dropdownGenericStatus($itemtype, $name, $rand, $value = CommonITILObject::INCOMING) {
       $item = new $itemtype();
 
       $tab[-1] = __("Don't change", "escalade");

@@ -5,25 +5,32 @@ if (!defined('GLPI_ROOT')) {
 
 class PluginEscaladeTicket {
 
-   public static function pre_item_update(CommonDBTM $item) {
-      // If forcing INCOMING status on group change, prevent it from being
-      // dropped by take into account autocomputation
-      if ($_SESSION['plugins']['escalade']['config']['ticket_last_status'] == CommonITILObject::INCOMING
-         && $item->fields['status'] == CommonITILObject::INCOMING
-         && ($item->input['_itil_assign']['groups_id'] ?? 0) > 0
-      ) {
-         $item->input['_do_not_compute_status'] = true;
-      }
-   }
+    public static function pre_item_update(CommonDBTM $item) {
+       $categories_id = $item->fields['itilcategories_id'] ?? 0;
+       if (PluginEscaladeConfig::canBypassEscalation($categories_id)) {
+          return;
+       }
+
+       if ($_SESSION['plugins']['escalade']['config']['ticket_last_status'] == CommonITILObject::INCOMING
+          && $item->fields['status'] == CommonITILObject::INCOMING
+          && ($item->input['_itil_assign']['groups_id'] ?? 0) > 0
+       ) {
+          $item->input['_do_not_compute_status'] = true;
+       }
+    }
 
    /**
     * Provide a redirection to other functions
     * @param  CommonDBTM $item
-    * @return nothing
+    * @return void
     */
-   static function item_update(CommonDBTM $item) {
+    static function item_update(CommonDBTM $item) {
+       $categories_id = $item->fields['itilcategories_id'] ?? 0;
+       if (PluginEscaladeConfig::canBypassEscalation($categories_id)) {
+          return;
+       }
 
-      if ($_SESSION['plugins']['escalade']['config']['remove_group']) {
+       if ($_SESSION['plugins']['escalade']['config']['remove_group']) {
 
          //solve ticket
          if (isset($item->input['status']) && $item->input['status'] == CommonITILObject::SOLVED) {
@@ -193,20 +200,23 @@ class PluginEscaladeTicket {
     *  called by "pre_item_add" hook on Group_Ticket object
     * @param CommonDBTM $item the ticket object
     */
-   static function addHistoryOnAddGroup(CommonDBTM $item) {
-      global $DB;
+    static function addHistoryOnAddGroup(CommonDBTM $item) {
+       global $DB;
 
-      if ($_SESSION['plugins']['escalade']['config']['remove_group'] == false) {
-         return true;
-      }
+       if ($_SESSION['plugins']['escalade']['config']['remove_group'] == false) {
+          return true;
+       }
 
-      //if group sent is not an assign group, return
-      if ($item->input['type'] != CommonITILActor::ASSIGN) {
-         return;
-      }
+       if ($item->input['type'] != CommonITILActor::ASSIGN) {
+          return;
+       }
 
-      $tickets_id = $item->input['tickets_id'];
-      $groups_id  = $item->input['groups_id'];
+       $tickets_id = $item->input['tickets_id'];
+       $groups_id  = $item->input['groups_id'];
+
+       if (self::canTicketBypassEscalation($tickets_id)) {
+          return true;
+       }
 
       //if group already assigned, return
       $group_ticket = new Group_Ticket();
@@ -302,6 +312,10 @@ class PluginEscaladeTicket {
       $tickets_id = $item->fields['tickets_id'];
       $groups_id  = $item->fields['groups_id'];
 
+      if (self::canTicketBypassEscalation($tickets_id)) {
+         return true;
+      }
+
       //remove old groups (keep last assigned)
       self::removeAssignGroups($tickets_id, $groups_id);
 
@@ -318,11 +332,15 @@ class PluginEscaladeTicket {
    * @param Ticket $ticket
    * @return bool
    */
-   static function assignUserGroup(Ticket $ticket) {
-      if (!is_array($ticket->input) || !count($ticket->input)) {
-         // Already cancel by another plugin
-         return false;
-      }
+    static function assignUserGroup(Ticket $ticket) {
+       if (!is_array($ticket->input) || !count($ticket->input)) {
+          return false;
+       }
+
+       $categories_id = $ticket->input['itilcategories_id'] ?? 0;
+       if (PluginEscaladeConfig::canBypassEscalation($categories_id)) {
+          return false;
+       }
 
       //check plugin behaviors (for avoid conflict)
       $plugin = new Plugin();
@@ -490,14 +508,20 @@ class PluginEscaladeTicket {
     * @param  Ticket_User $item Ticket_User object
     * @return nothing
     */
-   static function item_add_user(Ticket_User $item, $type = CommonITILActor::ASSIGN) {
-      $users_id   = $item->input['users_id'];
-      $tickets_id = $item->input['tickets_id'];
-      $ticket = new Ticket();
-      $ticket->getFromDB($tickets_id);
-      $groups_id = [];
+    static function item_add_user(Ticket_User $item, $type = CommonITILActor::ASSIGN) {
+       $users_id   = $item->input['users_id'];
+       $tickets_id = $item->input['tickets_id'];
+       $ticket = new Ticket();
+       $ticket->getFromDB($tickets_id);
 
-      self::removeAssignUsers($tickets_id, $users_id, $type);
+       $categories_id = $ticket->fields['itilcategories_id'] ?? 0;
+       if (PluginEscaladeConfig::canBypassEscalation($categories_id)) {
+          return true;
+       }
+
+       $groups_id = [];
+
+       self::removeAssignUsers($tickets_id, $users_id, $type);
 
       // == Add user groups on modification ==
       //check this plugin config
@@ -587,18 +611,21 @@ class PluginEscaladeTicket {
     * @param  CommonDBTM $item
     * @return nothing
     */
-   static function qualification(CommonDBTM $item) {
-      global $DB;
+    static function qualification(CommonDBTM $item) {
+       global $DB;
 
-      //get auto-assign mode (config in entity)
-      $auto_assign_mode = Entity::getUsedConfig('auto_assign_mode', $_SESSION['glpiactive_entity']);
-      if ($auto_assign_mode == Entity::CONFIG_NEVER) {
-         return true;
-      }
+       $categories_id = $item->input['itilcategories_id'] ?? 0;
+       if (PluginEscaladeConfig::canBypassEscalation($categories_id)) {
+          return true;
+       }
 
-      //get category
-      $category = new ITILCategory();
-      $category->getFromDB($item->input['itilcategories_id']);
+       $auto_assign_mode = Entity::getUsedConfig('auto_assign_mode', $_SESSION['glpiactive_entity']);
+       if ($auto_assign_mode == Entity::CONFIG_NEVER) {
+          return true;
+       }
+
+       $category = new ITILCategory();
+       $category->getFromDB($item->input['itilcategories_id']);
 
       //category group
       if (!empty($category->fields['groups_id'])
@@ -743,6 +770,21 @@ class PluginEscaladeTicket {
       //all ok
       echo "{\"success\":true, \"newID\":$newID}";
 
+   }
+
+
+   /**
+    * Check if a ticket should bypass escalation based on its category
+    * @param int $tickets_id the ticket id
+    * @return bool
+    */
+   static function canTicketBypassEscalation($tickets_id) {
+      $ticket = new Ticket();
+      if ($ticket->getFromDB($tickets_id)) {
+         $categories_id = $ticket->fields['itilcategories_id'] ?? 0;
+         return PluginEscaladeConfig::canBypassEscalation($categories_id);
+      }
+      return false;
    }
 
 

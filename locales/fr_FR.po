@@ -220,3 +220,10 @@ msgstr "Assigner le ticket au groupe"
 #: inc/config.class.php:214
 msgid "Assign a group quickly"
 msgstr "Assigner un groupe rapidement"
+
+#: inc/config.class.php:312
+msgid "Ticket categories that bypass escalation"
+msgstr "Catégories de tickets qui bypassent l'escalade"
+
+msgid "Select categories"
+msgstr "Sélectionner des catégories"

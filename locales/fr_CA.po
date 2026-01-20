@@ -208,3 +208,10 @@ msgstr "Ne pas modifier"
 #: js/cloneandlink_ticket.js.php:13
 msgid "Clone and link"
 msgstr "Cloner et lier"
+
+#: inc/config.class.php:312
+msgid "Ticket categories that bypass escalation"
+msgstr "Catégories de tickets qui bypassent l'escalade"
+
+msgid "Select categories"
+msgstr "Sélectionner des catégories"
