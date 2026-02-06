@@ -106,20 +106,31 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central") {
    }
 
    $(document).ready(function() {
-      // only in ticket form
-      if (location.pathname.indexOf('ticket.form.php') > 0
-         || location.pathname.indexOf('problem.form.php') > 0
-         || location.pathname.indexOf('change.form.php') > 0) {
-         $(".ui-tabs-panel:visible").ready(function() {
-            removeAllDeleteButtons();
-         })
 
-         $("#tabspanel + div.ui-tabs").on("tabsload", function() {
-            setTimeout(function() {
+   // only in ticket / problem / change form
+      if (location.pathname.indexOf('ticket.form.php') < 0 &&
+         location.pathname.indexOf('problem.form.php') < 0 &&
+         location.pathname.indexOf('change.form.php') < 0
+      ) {
+      return;
+     }
+
+      removeAllDeleteButtons();
+
+      var targetNode = document.body;
+
+      var observer = new MutationObserver(function (mutations) {
+         mutations.forEach(function (mutation) {
+            if (mutation.addedNodes.length > 0) {
                removeAllDeleteButtons();
-            }, 300);
+           }
          });
-      }
+     });
+
+      observer.observe(targetNode, {
+         childList: true,
+         subtree: true
+      });
    });
 JAVASCRIPT;
    echo $JS;
