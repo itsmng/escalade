@@ -29,7 +29,7 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
       }
 
       //set active group in red
-      $("table:contains('$locale_actor') td:last, .tab_actors .actor-bloc:last")
+      $(".tab_actors .actor-bloc:last")
          .find("i[class*=fa-users]")
          .addClass('escalade_active')
          .next()
@@ -45,11 +45,17 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
    $(document).ready(function() {
       // only in ticket form
       if (location.pathname.indexOf('ticket.form.php') != 0) {
-         $(".ui-tabs-panel:visible").ready(function() {
-            ticketEscalation();
-         })
+         ticketEscalation();
 
+         // V1: jQuery UI tabs
          $("#tabspanel + div.ui-tabs").on("tabsload", function() {
+            setTimeout(function() {
+               ticketEscalation();
+            }, 300);
+         });
+
+         // V2: re-run after AJAX-loaded tab content
+         $(document).ajaxComplete(function() {
             setTimeout(function() {
                ticketEscalation();
             }, 300);

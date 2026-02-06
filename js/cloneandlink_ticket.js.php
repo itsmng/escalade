@@ -30,9 +30,27 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
             "alt='$locale_cloneandlink' " +
             "title='$locale_cloneandlink' class='pointer' id='cloneandlink_ticket'>";
 
-         $("th:contains('$locale_linkedtickets')>span.fa")
-            .after(duplicate_html);
-         addOnclick();
+         // V1: old table-based layout
+         var target = $("th:contains('$locale_linkedtickets')>span.fa");
+         if (target.length > 0) {
+            target.after(duplicate_html);
+            addOnclick();
+            return;
+         }
+
+         // V2: find label for linked tickets section
+         var label = $("label.form-label:contains('$locale_linkedtickets')").first();
+         if (label.length > 0) {
+            var textNode = label.contents().filter(function() {
+               return this.nodeType === 3 && this.textContent.trim().length > 0;
+            }).first();
+            if (textNode.length > 0) {
+               textNode.after(duplicate_html);
+            } else {
+               label.prepend(duplicate_html);
+            }
+            addOnclick();
+         }
 
       }, 100);
    }
@@ -63,6 +81,18 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
 
    $(document).ajaxStop(function() {
       addCloneLink();
+   });
+
+   $(document).ready(function() {
+      var targetNode = document.getElementById('main-accordion-view');
+      if (targetNode) {
+         var debounceTimer;
+         var observer = new MutationObserver(function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(addCloneLink, 300);
+         });
+         observer.observe(targetNode, { childList: true, subtree: true });
+      }
    });
 
 JAVASCRIPT;
