@@ -29,16 +29,21 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
       }
 
       //set active group in red
-      $(".tab_actors .actor-bloc:last")
+      var $target = $(".tab_actors .actor-bloc:last")
          .find("a[href*=group]")
          .addClass('escalade_active')
-         .last()
-         .append(
-            $('<div></div>').load(
-               plugin_url+'/ajax/history.php',
-               {'tickets_id': tickets_id}
-            )
-         );
+         .last();
+
+      var $historyDiv = $('<div></div>').appendTo($target);
+      $.ajax({
+         url: plugin_url+'/ajax/history.php',
+         type: 'POST',
+         data: {'tickets_id': tickets_id},
+         global: false,
+         success: function(data) {
+            $historyDiv.html(data);
+         }
+      });
    }
 
    $(document).ready(function() {
