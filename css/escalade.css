@@ -10,8 +10,15 @@
 a.escalade_active, .escalade_active a {
    color:red !important;
 }
+.escalade_active i {
+   color:red !important;
+}
 a.escalade_history, .escalade_history a, .escalade_history i {
    color:grey !important;
+}
+.plugin-escalade-ticket-history,
+.plugin-escalade-ticket-groups {
+   margin-top: 0.75rem;
 }
 .escalade a.up_a {
    display: inline-block;

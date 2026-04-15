@@ -23,3 +23,30 @@ var checkDOMChange = function (selector, handler) {
       checkDOMChange(selector, handler);
    }, 100 );
 };
+
+
+var pluginEscaladeActorPanelIndexes = {
+   requester: 0,
+   observer: 1,
+   assign: 2
+};
+
+
+var pluginEscaladeGetActorPanel = function(role) {
+   var $modernPanel = $(".itil-actor-card[data-actor-role='" + role + "']").first();
+   if ($modernPanel.length) {
+      return $modernPanel;
+   }
+
+   var panelIndex = pluginEscaladeActorPanelIndexes[role];
+   if (panelIndex === undefined) {
+      return $();
+   }
+
+   return $(".tab_actors .actor-bloc").eq(panelIndex);
+};
+
+
+var pluginEscaladeIsModernActorPanel = function($panel) {
+   return $panel.is(".itil-actor-card");
+};

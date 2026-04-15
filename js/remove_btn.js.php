@@ -53,10 +53,18 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central") {
    }
 
    $JS = <<<JAVASCRIPT
-   var removeDeleteButtons = function(str, num) {
+   var removeDeleteButtons = function(str, num, role, entryType) {
       $("table:contains('$locale_actor') td:last-child a[onclick*="+str+"], \
          .tab_actors .actor-bloc:eq("+num+") a[onclick*="+str+"]")
             .remove();
+
+      var panel = pluginEscaladeGetActorPanel(role);
+      if (pluginEscaladeIsModernActorPanel(panel)) {
+         panel
+            .find("[data-actor-entry][data-entry-type='" + entryType + "']")
+            .find("[data-role='remove-actor']")
+            .remove();
+      }
    }
 
    var removeAllDeleteButtons = function() {
@@ -73,35 +81,35 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central") {
       // ## REQUESTER
       //remove "delete" group buttons
       if ({$remove_delete_requester_group_btn}) {
-         removeDeleteButtons("group_"+type, 0);
+         removeDeleteButtons("group_"+type, 0, 'requester', 'group');
       }
       //remove "delete" user buttons
       if ({$remove_delete_requester_user_btn}) {
-         removeDeleteButtons(type+"_user", 0);
+         removeDeleteButtons(type+"_user", 0, 'requester', 'user');
       }
 
       // ## WATCHER
       //remove "delete" group buttons
       if ({$remove_delete_watcher_group_btn}) {
-         removeDeleteButtons("group_"+type, 1);
+         removeDeleteButtons("group_"+type, 1, 'observer', 'group');
       }
       //remove "delete" user buttons
       if ({$remove_delete_watcher_user_btn}) {
-         removeDeleteButtons(type+"_user", 1);
+         removeDeleteButtons(type+"_user", 1, 'observer', 'user');
       }
 
       // ## ASSIGN
       //remove "delete" group buttons
       if ({$remove_delete_assign_group_btn}) {
-         removeDeleteButtons("group_"+type, 2);
+         removeDeleteButtons("group_"+type, 2, 'assign', 'group');
       }
       //remove "delete" user buttons
       if ({$remove_delete_assign_user_btn}) {
-         removeDeleteButtons(type+"_user", 2);
+         removeDeleteButtons(type+"_user", 2, 'assign', 'user');
       }
       //remove "delete" supplier buttons
       if ({$remove_delete_assign_supplier_btn}) {
-         removeDeleteButtons("supplier_"+type, 2);
+         removeDeleteButtons("supplier_"+type, 2, 'assign', 'supplier');
       }
    }
 

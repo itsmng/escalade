@@ -17,29 +17,48 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
 
    var ticketEscalation = function() {
       var tickets_id = getUrlParameter('id');
+      var assignPanel = pluginEscaladeGetActorPanel('assign');
 
       //only in edit form
       if (tickets_id == undefined) {
          return;
       }
 
-      // if escalade block already inserted
-      if ($(".escalade_active").get(0)) {
+      if (!assignPanel.length) {
          return;
       }
 
-      //set active group in red
-      $(".tab_actors .actor-bloc:last")
-         .find("i[class*=fa-users]")
-         .addClass('escalade_active')
-         .next()
-         .next()
-         .after(
-            $('<div></div>').load(
-               plugin_url+'/ajax/group.php',
-               {'tickets_id': tickets_id}
-            )
-         );
+      // if escalade block already inserted
+      if (assignPanel.find(".plugin-escalade-ticket-groups").get(0)) {
+         return;
+      }
+
+      var groupDiv = $('<div class="plugin-escalade-ticket-groups"></div>');
+
+      if (pluginEscaladeIsModernActorPanel(assignPanel)) {
+         var groupRows = assignPanel.find("[data-actor-entry][data-entry-type='group']");
+         if (groupRows.length) {
+            groupRows.last().addClass('escalade_active');
+         }
+
+         groupDiv.appendTo(assignPanel.find("[data-role='actor-list']").first());
+      } else {
+         var target = assignPanel.find("i[class*=fa-users]").last();
+         if (!target.length) {
+            return;
+         }
+
+         target
+            .addClass('escalade_active')
+            .next()
+            .next()
+            .after(groupDiv);
+      }
+
+      groupDiv.load(
+         plugin_url+'/ajax/group.php',
+         {'tickets_id': tickets_id}
+      );
    }
 
    $(document).ready(function() {

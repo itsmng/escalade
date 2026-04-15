@@ -17,31 +17,52 @@ if ($_SESSION['glpiactiveprofile']['interface'] == "central"
 
    var ticketEscalation = function() {
       var tickets_id = getUrlParameter('id');
+      var assignPanel = pluginEscaladeGetActorPanel('assign');
 
       //only in edit form
       if (tickets_id == undefined) {
          return;
       }
 
-      // if escalade block already inserted
-      if ($(".escalade_active").get(0)) {
+      if (!assignPanel.length) {
          return;
       }
 
-      //set active group in red
-      var $target = $(".tab_actors .actor-bloc:last")
-         .find("a[href*=group]")
-         .addClass('escalade_active')
-         .last();
+      // if escalade block already inserted
+      if (assignPanel.find(".plugin-escalade-ticket-history").get(0)) {
+         return;
+      }
 
-      var $historyDiv = $('<div></div>').appendTo($target);
+      var historyDiv = $('<div class="plugin-escalade-ticket-history"></div>');
+
+      if (pluginEscaladeIsModernActorPanel(assignPanel)) {
+         var groupRows = assignPanel.find("[data-actor-entry][data-entry-type='group']");
+         if (groupRows.length) {
+            groupRows.last().addClass('escalade_active');
+            historyDiv.insertAfter(groupRows.last());
+         } else {
+            historyDiv.appendTo(assignPanel.find("[data-role='actor-list']").first());
+         }
+      } else {
+         var target = assignPanel
+            .find("a[href*=group]")
+            .addClass('escalade_active')
+            .last();
+
+         if (!target.length) {
+            return;
+         }
+
+         historyDiv.appendTo(target);
+      }
+
       $.ajax({
          url: plugin_url+'/ajax/history.php',
          type: 'POST',
          data: {'tickets_id': tickets_id},
          global: false,
          success: function(data) {
-            $historyDiv.html(data);
+            historyDiv.html(data);
          }
       });
    }
