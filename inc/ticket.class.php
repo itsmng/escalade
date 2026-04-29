@@ -358,34 +358,56 @@ class PluginEscaladeTicket {
       }
 
       if (isset($ticket->input['_users_id_assign'])
-          && $ticket->input['_users_id_assign'] > 0
-          && (!isset($ticket->input['_groups_id_assign'])
-            || $ticket->input['_groups_id_assign'] <= 0)) {
-         if ($_SESSION['plugins']['escalade']['config']['use_assign_user_group'] == 1) {
-            // First group
-            $ticket->input['_groups_id_assign']
-               = PluginEscaladeUser::getTechnicianGroup($ticket->input['entities_id'],
-                                                         $ticket->input['_users_id_assign'],
-                                                         true);
-            //prevent adding empty group
-            if (empty($ticket->input['_groups_id_assign'])) {
-               unset($ticket->input['_groups_id_assign']);
+          && !self::hasAssignedGroupInInput($ticket->input)) {
+         $users_id_assign = is_array($ticket->input['_users_id_assign'])
+            ? $ticket->input['_users_id_assign']
+            : [$ticket->input['_users_id_assign']];
+
+         foreach ($users_id_assign as $users_id) {
+            if ((int)$users_id <= 0) {
+               continue;
             }
-         } else {
-            // All groups
-            $ticket->input['_additional_groups_assigns']
-               = PluginEscaladeUser::getTechnicianGroup($ticket->input['entities_id'],
-                                                         $ticket->input['_users_id_assign'],
-                                                         false);
-            //prevent adding empty group
-            if (empty($ticket->input['_additional_groups_assigns'])) {
-               unset($ticket->input['_additional_groups_assigns']);
+
+            $group_id = PluginEscaladeUser::getTechnicianGroup(
+               $ticket->input['entities_id'],
+               $users_id,
+               $_SESSION['plugins']['escalade']['config']['use_assign_user_group'] == 1
+            );
+
+            if (!empty($group_id)) {
+               $ticket->input['_groups_id_assign'] = $group_id;
+               break;
             }
          }
       }
 
       return true;
 
+   }
+
+   static private function hasAssignedGroupInInput(array $input) {
+      if (isset($input['_groups_id_assign'])) {
+         $groups_id_assign = is_array($input['_groups_id_assign'])
+            ? $input['_groups_id_assign']
+            : [$input['_groups_id_assign']];
+
+         foreach ($groups_id_assign as $groups_id) {
+            if ((int)$groups_id > 0) {
+               return true;
+            }
+         }
+      }
+
+      if (isset($input['_additional_groups_assigns'])
+          && is_array($input['_additional_groups_assigns'])) {
+         foreach ($input['_additional_groups_assigns'] as $groups_id) {
+            if ((int)$groups_id > 0) {
+               return true;
+            }
+         }
+      }
+
+      return false;
    }
 
    /**

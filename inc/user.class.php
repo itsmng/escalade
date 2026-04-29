@@ -79,26 +79,72 @@ class PluginEscaladeUser extends CommonDBTM {
    static private function getUserGroup($entity, $userid, $filter = '', $first = true) {
       global $DB;
 
-      $query = "SELECT glpi_groups.id
-                FROM glpi_groups_users
-                INNER JOIN glpi_groups ON (glpi_groups.id = glpi_groups_users.groups_id)
-                WHERE glpi_groups_users.users_id='$userid'".
-                getEntitiesRestrictRequest(' AND ', 'glpi_groups', '', $entity, true, true);
-
-      if ($filter) {
-         $query .= "AND ($filter)";
+      $userid = (int)$userid;
+      if ($userid <= 0) {
+         return 0;
       }
 
-      $query.= " ORDER BY glpi_groups_users.id";
+      $where = [
+         'glpi_groups_users.users_id' => $userid,
+      ] + getEntitiesRestrictCriteria('glpi_groups', '', $entity, true, true);
 
-      $rep = [];
-      foreach ($DB->request($query) as $data) {
-         if ($first) {
-            return $data['id'];
+      if (!empty($filter)) {
+         $where['glpi_groups.' . trim($filter, '`')] = 1;
+      }
+
+      $groups = [];
+      $iterator = $DB->request([
+         'SELECT'    => 'glpi_groups.id',
+         'FROM'      => 'glpi_groups_users',
+         'INNER JOIN' => [
+            'glpi_groups' => [
+               'FKEY' => [
+                  'glpi_groups'       => 'id',
+                  'glpi_groups_users' => 'groups_id',
+               ],
+            ],
+         ],
+         'WHERE'     => $where,
+         'ORDER'     => 'glpi_groups_users.id',
+      ]);
+
+      foreach ($iterator as $data) {
+         if (!in_array($data['id'], $groups)) {
+            $groups[] = $data['id'];
          }
-         $rep[]=$data['id'];
       }
-      return ($first ? 0 : array_pop($rep));
+
+      if (!count($groups)) {
+         $user = new User();
+         if ($user->getFromDB($userid)
+             && (int)$user->fields['groups_id'] > 0
+             && self::canUseGroup($entity, $user->fields['groups_id'], $filter)) {
+            $groups[] = (int)$user->fields['groups_id'];
+         }
+      }
+
+      if ($first) {
+         return $groups[0] ?? 0;
+      }
+
+      return count($groups) ? array_pop($groups) : 0;
+   }
+
+   static private function canUseGroup($entity, $groups_id, $filter = '') {
+      global $DB;
+
+      $where = [
+         'glpi_groups.id' => (int)$groups_id,
+      ] + getEntitiesRestrictCriteria('glpi_groups', '', $entity, true, true);
+
+      if (!empty($filter)) {
+         $where['glpi_groups.' . trim($filter, '`')] = 1;
+      }
+
+      return count($DB->request([
+         'FROM'  => 'glpi_groups',
+         'WHERE' => $where,
+      ])) > 0;
    }
 
    static function getRequesterGroup($entity, $userid, $first = true) {
