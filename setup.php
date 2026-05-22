@@ -173,7 +173,7 @@ function plugin_version_escalade() {
       'name'           => __("Escalation", "escalade"),
       'version'        => PLUGIN_ESCALADE_VERSION,
       'author'         => "<a href='http://www.teclib.com'>Teclib'</a>",
-      'homepage'       => "https://github.com/pluginsGLPI/escalade",
+      'homepage'       => "https://github.com/itsmng/escalade",
       'license'        => 'GPLv2+',
       'requirements'   => [
          'glpi' => [
